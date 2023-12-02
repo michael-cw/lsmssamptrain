@@ -4,14 +4,10 @@
 # LSMS Sampling Trainer Application
 
 <!-- style in red -->
-
-<span style="color: red; font-weight: bold;">
-
-## ⚠️ ATTENTION: This is a work in progress. The application is not yet ready for use.
-
-</span>
-
-<!-- badges: start -->
+<p float="center">
+<img src="warning.svg" width="100%" />
+</p
+&#10;<!-- badges: start -->
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
