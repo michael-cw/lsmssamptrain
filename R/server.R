@@ -518,6 +518,7 @@ main_server <- function(input, output, session) {
   ##  1. BASE map
   output$pop.hh.map.srs <- renderLeaflet({
     validate(need(mapPopHH(), message = F))
+    eth.shp<-req(ETHSHP())
     h <- mapPopHH()
     ##  Create popups
     popup.hh <- paste0(
