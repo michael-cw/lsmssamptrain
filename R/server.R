@@ -26,13 +26,15 @@ main_server <- function(input, output, session) {
 
   mapPop <- reactive({
     ## Load from file, no SIMPOP here!
-    load("data/population.rda")
+    #load("data/population.rda")
+    population<-lsmssamptrain::population
     return(data.table::as.data.table(population))
   })
 
   mapPopHH <- reactive({
     shiny::validate(need(mapPop(), message = F))
-    load("data/population.hh.rda")
+    # load("data/population.hh.rda")
+    population.hh<-lsmssamptrain::population.hh
     return(population.hh)
   })
 
