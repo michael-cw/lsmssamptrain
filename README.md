@@ -5,11 +5,8 @@
 
 <!-- style in red -->
 
-<div style="color: red;">
-
-## ATTENTION: This is a work in progress. The application is not yet ready for use.
-
-</div>
+\[!WARNING\] ATTENTION: This is a work in progress. The application is
+not yet ready for use.
 
 <!-- badges: start -->
 
