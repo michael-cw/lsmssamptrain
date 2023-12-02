@@ -1,0 +1,31 @@
+Package: lsmssamptrain
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person("Michael", "Wild", , "Wild@worldbank.org", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Language: en
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    data.table,
+    dplyr,
+    DT,
+    ggplot2,
+    leaflet,
+    magrittr,
+    plotly,
+    ReGenesees (>= 2.3),
+    sampling,
+    sass,
+    sf,
+    shiny,
+    shinydashboard,
+    waiter
+Depends: 
+    R (>= 2.10)
+LazyData: true
+Remotes:  
+    DiegoZardetto/ReGenesees
