@@ -39,7 +39,8 @@ main_server <- function(input, output, session) {
   })
 
   ETHSHP <- reactive({
-    load("data/eth.shp.rda")
+    #load("data/eth.shp.rda")
+    eth.shp<-lsmssamptrain::eth.shp
     return(eth.shp)
   })
 
