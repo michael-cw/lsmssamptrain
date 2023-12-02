@@ -5,8 +5,11 @@
 
 <!-- style in red -->
 
-\[!WARNING\] ATTENTION: This is a work in progress. The application is
-not yet ready for use.
+:warning:
+
+## ATTENTION: This is a work in progress. The application is not yet ready for use.
+
+:warning:
 
 <!-- badges: start -->
 
