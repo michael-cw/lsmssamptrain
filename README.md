@@ -5,11 +5,11 @@
 
 <!-- style in red -->
 
-:warning:
+<span style="color: red; font-weight: bold;">
 
-## ATTENTION: This is a work in progress. The application is not yet ready for use.
+## ⚠️ ATTENTION: This is a work in progress. The application is not yet ready for use.
 
-:warning:
+</span>
 
 <!-- badges: start -->
 
