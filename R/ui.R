@@ -519,6 +519,65 @@ main_ui<-function(request){
                      )
                    )
                  )
+               ),
+               tabPanel(
+                 "Summary",
+                 sidebarPanel(
+                   width = 3,
+                   h4("Summary Report & Export", style = "color: #002244; font-weight: bold;"),
+                   p("Generate a consolidated summary across simulated survey designs and export a formal World Bank report."),
+                   actionButton("summary", "Create / Refresh Summary",
+                                icon = icon("table"),
+                                style = "color: #fff; background-color: #002244; border-color: #002244; width: 100%;"
+                   ),
+                   br(), br(),
+                   downloadButton("download_word", "Download Word Report",
+                                  style = "color: #fff; background-color: #009FDA; border-color: #0080B0; width: 100%; font-size:105%;"
+                   ),
+                   hr(),
+                   h5("Report Components", style = "font-weight: bold; color: #002244;"),
+                   tags$ul(
+                     tags$li("Survey design parameters"),
+                     tags$li("Simulation estimate comparison"),
+                     tags$li("Achieved precision vs. costs"),
+                     tags$li("Regional stratum allocation"),
+                     tags$li("Spatial sample distribution"),
+                     tags$li("Survey diagnostics & narrative")
+                   ),
+                   br(),
+                   helpText("Tip: Run simulations in the SRS, Stratification, and Clustering tabs to populate empirical estimates. Baseline theoretical values are displayed automatically.")
+                 ),
+                 mainPanel(
+                   width = 9,
+                   fluidPage(
+                     tabsetPanel(
+                       tabPanel(
+                         "Comparative Performance",
+                         br(),
+                         h4("Simulation Results & Sampling Design Comparison", style = "color: #002244; font-weight: bold;"),
+                         p("Contrasts the sampling designs evaluated in this session, reporting sample sizes, simulated estimates versus population benchmarks, achieved precision (MOE), and field travel costs."),
+                         DT::DTOutput("tab_summary"),
+                         br(),
+                         h4("Regional Stratum Allocation Breakdown", style = "color: #002244; font-weight: bold;"),
+                         p("Breakdown of sample clusters, households, individuals, and field travel costs across Ethiopian administrative zones."),
+                         DT::DTOutput("tab_summary_stratum")
+                       ),
+                       tabPanel(
+                         "Spatial Distribution Map",
+                         br(),
+                         h4("Spatial Distribution of Sampled Households", style = "color: #002244; font-weight: bold;"),
+                         p("Geographical dispersion of sampled households across Ethiopian administrative zones (Tigray, Amhara, and Oromia)."),
+                         leaflet::leafletOutput("summary_map", width = "100%", height = "600px")
+                       ),
+                       tabPanel(
+                         "Diagnostics & Narrative",
+                         br(),
+                         h4("Sampling Simulation Diagnostics & Evaluation", style = "color: #002244; font-weight: bold;"),
+                         uiOutput("summary_narrative")
+                       )
+                     )
+                   )
+                 )
                )
     )
 

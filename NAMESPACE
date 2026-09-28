@@ -2,6 +2,7 @@
 
 export("%>%")
 export(runSampleTrainer)
+export(run_app)
 import(shiny, except=c(dataTableOutput, renderDataTable))
 importFrom(DT,DTOutput)
 importFrom(DT,dataTableOutput)

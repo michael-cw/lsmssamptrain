@@ -2,9 +2,12 @@
 % Please edit documentation in R/runapp.R
 \name{runSampleTrainer}
 \alias{runSampleTrainer}
+\alias{run_app}
 \title{Start the LSMS Sampling Trainer Application application}
 \usage{
 runSampleTrainer(launch.browser = T)
+
+run_app(launch.browser = T)
 }
 \arguments{
 \item{launch.browser}{If true, the system's default web browser will be

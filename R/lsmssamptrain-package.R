@@ -31,16 +31,23 @@
 # #' @importFrom Matrix as.matrix head mean print summary
 #' @importFrom plotly ggplotly plotlyOutput renderPlotly
 # #' @importFrom plyr . mutate summarise
-# #' @importFrom PracTools strAlloc
-# #' @importFrom raster as.data.frame as.factor as.matrix cut mean merge nrow subset
-# #' @importFrom readstata13 save.dta13
-# #' @importFrom rgdal summary
 #' @importFrom sampling getdata HTestimator srswor strata
 #' @importFrom stats dnorm median qnorm sd runif
 #' @importFrom utils head read.csv
 #' @importFrom sf st_read
 ## usethis namespace: end
 NULL
+
+.onLoad <- function(libname, pkgname) {
+  if (is.null(getOption("sp_startup_message"))) {
+    options(sp_startup_message = "none")
+  }
+  if (Sys.getenv("_SP_STARTUP_MESSAGE_") == "") {
+    Sys.setenv("_SP_STARTUP_MESSAGE_" = "none")
+  }
+  invisible()
+}
+
 
 utils::globalVariables(c(".", "lon", "hhidg",
                          "lat", "stratum", "countHH", "count", "density", "value",

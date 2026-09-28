@@ -6,3 +6,4 @@ dev
 .Ruserdata
 .Rbuildignore
 .Rprofile
+.DS_Store
