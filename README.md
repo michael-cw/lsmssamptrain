@@ -13,8 +13,8 @@ MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/
 The **LSMS Sampling Trainer** (`lsmssamptrain`) is an interactive R
 Shiny application developed to train survey practitioners, national
 statistical offices, and researchers in the fundamental principles of
-household survey sampling design. Based on the [UN Handbook of Surveys
-on Households and Individuals
+the most common household survey sampling design. Based on the [UN
+Handbook of Surveys on Households and Individuals
 2026](https://unstats.un.org/UNSDWebsite/statcom/session_57/documents/BG-3k-Handbook_on_Surveys_of_Household_and_Individuals-E.pdf),
 the application allows users to explore the statistical and logistical
 trade-offs across different probability sampling techniques using a
@@ -126,21 +126,22 @@ run_app()
 ### Running on a Shiny Server
 
 To deploy the application on a Shiny Server or Posit Connect, create an
-`app.R` file:
+`app.R` file with the following content:
 
 ``` r
 library(lsmssamptrain)
 runSampleTrainer(launch.browser = FALSE)
 ```
 
+The app can then be used by anyone with access to the server.
+
 ------------------------------------------------------------------------
 
-## World Bank Visual Identity & Styling
+### Way forward
 
-The application and exported Word reports are styled according to the
-**World Bank Group Visual Identity Guidelines**: - **Primary Color
-(Navy)**: `#002244` - **Accent Color (Bright Blue)**: `#009FDA` -
-**Alert / Accent Color (Red)**: `#B73338`
+The application also has a provision to download the relevant training
+slides used for each topic, however as the updated versions are not
+completed yet, the are not included at this time.
 
 ------------------------------------------------------------------------
 
@@ -153,5 +154,6 @@ This project is licensed under the MIT License - see the
 
 - World Bank Living Standards Measurement Study (LSMS):
   <https://www.worldbank.org/lsms>
-- UN Statistics Division: *Designing Household Survey Samples: Practical
-  Guidelines*
+- UN Statistics Division: [UN Handbook of Surveys on Households and
+  Individuals
+  2026](https://unstats.un.org/UNSDWebsite/statcom/session_57/documents/BG-3k-Handbook_on_Surveys_of_Household_and_Individuals-E.pdf)
