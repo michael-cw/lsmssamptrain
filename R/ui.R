@@ -301,21 +301,24 @@ main_ui<-function(request){
                      ),
                      fluidRow(
                        column(
-                         7, radioButtons("simuRes", "", c("Table" = 1, "Graph" = 2),
-                                         selected = 2, inline = T
+                         7,
+                         radioButtons("simuRes", "", c("Table" = 1, "Graph" = 2),
+                                      selected = 2, inline = T
+                         ),
+                         conditionalPanel(
+                           "input.simuRes==2",
+                           div(
+                             style = "border: 1px solid #D9E2EC; border-top: 3px solid #009FDA; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                             h5("Sampling Distribution of the Mean (Self-Weighting SRS)", style = "color: #002244; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                             plotly::plotlyOutput("hist_srs", height = "340px")
+                           ),
+                           uiOutput("weight_diag_srs")
                          ),
                          conditionalPanel(
                            "input.simuRes==1",
                            dataTableOutput("tab_srs_sample")
                          ),
-                         conditionalPanel(
-                           "input.simuRes==2",
-                           plotly::plotlyOutput("hist_srs")
-                         ),
                          br(),
-                         br(),
-                         br(),
-                         dataTableOutput("tab_srs"),
                          singleton(
                            tags$head(tags$script(src = "message-handler.js"))
                          )
@@ -325,8 +328,13 @@ main_ui<-function(request){
                          leafletOutput("pop.hh.map.srs", width = "100%", height = "550px")
                        )
                      ),
-                     fluidRow(br()),
-                     fluidRow()
+                     fluidRow(
+                       column(
+                         7,
+                         dataTableOutput("tab_srs")
+                       ),
+                       column(5)
+                     )
                    )
                  )
                ),
@@ -382,19 +390,53 @@ main_ui<-function(request){
                      ),
                      fluidRow(
                        column(
-                         7, radioButtons("simuRes1", "", c("Table" = 1, "Graph" = 2),
-                                         selected = 2, inline = T
+                         7,
+                         fluidRow(
+                           column(4, radioButtons("simuRes1", "", c("Table" = 1, "Graph" = 2),
+                                                  selected = 2, inline = T
+                           )),
+                           column(8, conditionalPanel(
+                             "input.simuRes1==2",
+                             checkboxInput("cmp_weights_str", "Side-by-Side: Weighted (HT) vs. Unweighted Mean", value = TRUE)
+                           ))
+                         ),
+                         conditionalPanel(
+                           "input.simuRes1==2 && !input.cmp_weights_str",
+                           div(
+                             style = "border: 1px solid #D9E2EC; border-top: 3px solid #009FDA; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                             h5("Weighted (Horvitz-Thompson)", style = "color: #002244; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                             plotly::plotlyOutput("hist_str", height = "340px")
+                           )
+                         ),
+                         conditionalPanel(
+                           "input.simuRes1==2 && input.cmp_weights_str",
+                           fluidRow(
+                             column(
+                               6,
+                               div(
+                                 style = "border: 1px solid #D9E2EC; border-top: 3px solid #009FDA; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                                 h5("Weighted (Horvitz-Thompson)", style = "color: #002244; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                                 plotly::plotlyOutput("hist_str_wt", height = "340px")
+                               )
+                             ),
+                             column(
+                               6,
+                               div(
+                                 style = "border: 1px solid #D9E2EC; border-top: 3px solid #E76F51; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                                 h5("Unweighted (Naive Sample Mean)", style = "color: #B73338; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                                 plotly::plotlyOutput("hist_str_unw", height = "340px")
+                               )
+                             )
+                           )
                          ),
                          conditionalPanel(
                            "input.simuRes1==2",
-                           plotly::plotlyOutput("hist_str")
+                           uiOutput("weight_diag_str")
                          ),
                          conditionalPanel(
                            "input.simuRes1==1",
                            dataTableOutput("tab_str_sample")
                          ),
-                         br(),
-                         br(),
                          br()
                        ),
                        column(
@@ -477,19 +519,52 @@ main_ui<-function(request){
                      fluidRow(
                        column(
                          7,
-                         radioButtons("simuRes2", "", c("Table" = 1, "Graph" = 2),
-                                      selected = 2, inline = T
+                         fluidRow(
+                           column(4, radioButtons("simuRes2", "", c("Table" = 1, "Graph" = 2),
+                                                  selected = 2, inline = T
+                           )),
+                           column(8, conditionalPanel(
+                             "input.simuRes2==2",
+                             checkboxInput("cmp_weights_clu", "Side-by-Side: Weighted (HT) vs. Unweighted Mean", value = TRUE)
+                           ))
+                         ),
+                         conditionalPanel(
+                           "input.simuRes2==2 && !input.cmp_weights_clu",
+                           div(
+                             style = "border: 1px solid #D9E2EC; border-top: 3px solid #009FDA; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                             h5("Weighted (Horvitz-Thompson)", style = "color: #002244; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                             plotly::plotlyOutput("hist_clu", height = "340px")
+                           )
+                         ),
+                         conditionalPanel(
+                           "input.simuRes2==2 && input.cmp_weights_clu",
+                           fluidRow(
+                             column(
+                               6,
+                               div(
+                                 style = "border: 1px solid #D9E2EC; border-top: 3px solid #009FDA; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                                 h5("Weighted (Horvitz-Thompson)", style = "color: #002244; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                                 plotly::plotlyOutput("hist_clu_wt", height = "340px")
+                               )
+                             ),
+                             column(
+                               6,
+                               div(
+                                 style = "border: 1px solid #D9E2EC; border-top: 3px solid #E76F51; border-radius: 4px; padding: 8px; background: #FFFFFF;",
+                                 h5("Unweighted (Naive Sample Mean)", style = "color: #B73338; font-weight: bold; text-align: center; margin-top: 2px; margin-bottom: 4px;"),
+                                 plotly::plotlyOutput("hist_clu_unw", height = "340px")
+                               )
+                             )
+                           )
                          ),
                          conditionalPanel(
                            "input.simuRes2==2",
-                           plotly::plotlyOutput("hist_clu")
+                           uiOutput("weight_diag_clu")
                          ),
                          conditionalPanel(
                            "input.simuRes2==1",
                            dataTableOutput("tab_clu_sample")
                          ),
-                         br(),
-                         br(),
                          br()
                        ),
                        column(

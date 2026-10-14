@@ -545,6 +545,8 @@ main_server <- function(input, output, session) {
             sample_srs$sampMOE <- sampMoeExp
             sample_srs$gplot_sample <- samp_temp[samp == 1]
             sample_srs$counter <- sample_srs$counter + 1
+            store$h <- rbind(store$h, data.frame(mean = sampMeanExp))
+            store$moe <- rbind(store$moe, data.frame(moe = sampMoeExp))
           } else {
             for (i in 1:100) {
               samp_temp <- dataHH[, samp := srswor(size, .N)]
@@ -563,6 +565,8 @@ main_server <- function(input, output, session) {
             sample_srs$sampMOE <- sampMoeExp
             sample_srs$gplot_sample <- samp_temp[samp == 1]
             sample_srs$counter <- sample_srs$counter + 1
+            store$h <- rbind(store$h, data.frame(mean = sampMeanExp))
+            store$moe <- rbind(store$moe, data.frame(moe = sampMoeExp))
           }
         })
         sample_srs$sampMeanFull <- sampMeanExp
@@ -660,64 +664,34 @@ main_server <- function(input, output, session) {
     simu <- buttonACT$sim
     shiny::validate(
       need(simu, message = F),
-      need(mapPopHH(), message = F)
+      need(mapPopHH(), message = F),
+      need(nrow(store$h) > 0, message = F)
     )
-    ##  A. Reading in old data
-    maxSim <- simu / 100
-    isolate({
-      h <- as.data.frame(store$h)
-      moe <- as.data.frame(store$moe)
-      p <- mapPop()
-    })
-    ##  B. Transform the data
+    p <- isolate(mapPop())
     m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
-    h_new <- as.data.frame(sample_srs$sampMeanFull)
-    moe_new <- as.data.frame(sample_srs$sampMoeFull)
-    names(moe_new) <- c("moe")
-    moe_new$moe <- mean(moe_new$moe, na.rm = T)
+    build_comp_hist(store$h, m, is_prop = (input$sampsiType == 1), fill_col = "#009FDA", style_theme = styleMain_noLeg)
+  })
 
-    h <- rbind(h, h_new)
-    moe <- rbind(moe, moe_new)
-    ##  C. Reading out new data
-    if (sample_srs$counter <= maxSim) {
-      isolate({
-        store$h <- h
-      })
-      isolate({
-        store$moe <- moe
-      })
-    }
-    names(h) <- "mean"
-    ##  D. Create the plot
-    if (input$sampsiType == 1) {
-      hist <- ggplot(h, aes(x = mean, after_stat(count) / sum(after_stat(count)))) +
-        geom_histogram(na.rm = F, binwidth = 0.0001, color = "#009FDA") +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") +
-        ylab("") +
-        styleMain_noLeg
-      hist1 <- ggplotly(hist)
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    } else if (input$sampsiType == 2) {
-      hist <- ggplot(h, aes(x = mean, y = after_stat(density))) +
-        geom_histogram(
-          bins = 50, fill = "#009FDA", color = "black"
-        ) +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") +
-        ylab("") +
-        styleMain_noLeg
-      hist1 <- ggplotly(hist)
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    }
+  output$weight_diag_srs <- renderUI({
+    simu <- buttonACT$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store$h) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    s <- sample_srs$gplot_sample
+    pik_vec <- if (!is.null(s) && "pik" %in% names(s)) s$pik else NULL
+    design_note <- "Under Simple Random Sampling (SRS), every household in the population frame has an identical inclusion probability (pik = n / N) and identical base weight (w = N / n). Because SRS is self-weighting (Kish DEFF_w = 1.00), the Horvitz-Thompson weighted mean and the unweighted sample mean are identical."
+    render_weight_diag_ui(
+      wt_vals = store$h$mean,
+      unw_vals = store$h$mean,
+      true_val = m,
+      pik_vec = pik_vec,
+      is_prop = (input$sampsiType == 1),
+      design_note = design_note
+    )
   })
 
   ##################################################################################
@@ -733,10 +707,10 @@ main_server <- function(input, output, session) {
       maxSim <- simu / 100
       if ((sample_srs$counter) == maxSim | input$stop == 1) {
         isolate({
-          tab <- data.frame(matrix(nrow = 3, ncol = 5))
+          tab <- data.frame(matrix(nrow = 3, ncol = 6))
           names(tab) <- c(
             "Stratum", "Number of EAs", "Number of Households",
-            "Number of Persons", "Total Costs"
+            "Number of Persons", "Base Weight (1/pik)", "Total Costs"
           )
           p <- mapPop()
           h <- mapPopHH()
@@ -757,9 +731,12 @@ main_server <- function(input, output, session) {
             tab[1, 4] <- round(sum(frame$count[frame$stratum == "1"]))
             tab[2, 4] <- round(sum(frame$count[frame$stratum == "3"]))
             tab[3, 4] <- round(sum(frame$count[frame$stratum == "4"]))
-            tab[1, 5] <- ceiling((sum(frame$dist[frame$stratum == "1"])))
-            tab[2, 5] <- ceiling((sum(frame$dist[frame$stratum == "3"])))
-            tab[3, 5] <- ceiling((sum(frame$dist[frame$stratum == "4"])))
+            tab[1, 5] <- round(mean(1 / frame$pik[frame$stratum == "1"], na.rm = TRUE), 1)
+            tab[2, 5] <- round(mean(1 / frame$pik[frame$stratum == "3"], na.rm = TRUE), 1)
+            tab[3, 5] <- round(mean(1 / frame$pik[frame$stratum == "4"], na.rm = TRUE), 1)
+            tab[1, 6] <- ceiling((sum(frame$dist[frame$stratum == "1"])))
+            tab[2, 6] <- ceiling((sum(frame$dist[frame$stratum == "3"])))
+            tab[3, 6] <- ceiling((sum(frame$dist[frame$stratum == "4"])))
           }
           tab_srs_sum <- tab
           sim_store$srs <- list(
@@ -921,6 +898,7 @@ main_server <- function(input, output, session) {
     buttonACT1$gogo<-1
     buttonACT1$sim<-input$sim1
     store1$h<-data.frame(mean=as.numeric(character()))
+    store1$h_unw<-data.frame(mean=as.numeric(character()))
     store1$moe<-data.frame(moe=as.numeric(character()))
     sample_str$counter<-0
     #print("reset")
@@ -970,6 +948,7 @@ main_server <- function(input, output, session) {
         hh_str <- dataHH[, .N, by = "stratum"][order(stratum)]
         Wh <- pop_str$N / pop
         sampMeanExp <- vector(mode = "numeric", length = 100)
+        sampMeanUnwExp <- vector(mode = "numeric", length = 100)
         sampMoeExp <- vector(mode = "numeric", length = 100)
       })
       ##    EQUAL
@@ -989,6 +968,7 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$employment.status, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           } else {
@@ -1004,6 +984,7 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$income, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           }
@@ -1011,8 +992,12 @@ main_server <- function(input, output, session) {
           sample_str$sampMean <- sampMeanExp
           sample_str$gplot_sample <- samp_temp
           sample_str$counter <- sample_str$counter + 1
+          store1$h <- rbind(store1$h, data.frame(mean = sampMeanExp))
+          store1$h_unw <- rbind(store1$h_unw, data.frame(mean = sampMeanUnwExp))
+          store1$moe <- rbind(store1$moe, data.frame(moe = sampMoeExp))
         })
         sample_str$sampMeanFull <- sampMeanExp
+        sample_str$sampMeanUnwFull <- sampMeanUnwExp
         sample_str$sampMoeFull <- sampMoeExp
         if (isolate(sample_str$counter) < maxSim & input$stop1 == 0) {
           invalidateLater(0, session)
@@ -1025,6 +1010,7 @@ main_server <- function(input, output, session) {
         isolate({
           n_str <- pmax(2, pmin(ceiling(size * Wh), hh_str$N))
           sampMeanExp <- vector(mode = "numeric", length = 100)
+          sampMeanUnwExp <- vector(mode = "numeric", length = 100)
           setorderv(dataHH, "stratum")
           if (input$sampsiType == 1) {
             for (i in 1:100) {
@@ -1039,6 +1025,7 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$employment.status, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           } else {
@@ -1054,14 +1041,19 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$income, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           }
           sample_str$sampMean <- sampMeanExp
           sample_str$gplot_sample <- samp_temp
           sample_str$counter <- sample_str$counter + 1
+          store1$h <- rbind(store1$h, data.frame(mean = sampMeanExp))
+          store1$h_unw <- rbind(store1$h_unw, data.frame(mean = sampMeanUnwExp))
+          store1$moe <- rbind(store1$moe, data.frame(moe = sampMoeExp))
         })
         sample_str$sampMeanFull <- sampMeanExp
+        sample_str$sampMeanUnwFull <- sampMeanUnwExp
         sample_str$sampMoeFull <- sampMoeExp
         if (isolate(sample_str$counter) < maxSim & input$stop1 == 0) {
           invalidateLater(0, session)
@@ -1073,6 +1065,7 @@ main_server <- function(input, output, session) {
         isolate({
           setkeyv(dataPP, c("stratum", "hhidg"))
           sampMeanExp <- vector(mode = "numeric", length = 100)
+          sampMeanUnwExp <- vector(mode = "numeric", length = 100)
           setorderv(dataHH, "stratum")
           if (input$sampsiType == 1) {
             sd_strat1 <- sd(dataPP[.("1"), employment.status], na.rm = TRUE)
@@ -1093,6 +1086,7 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$employment.status, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           } else {
@@ -1114,14 +1108,19 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$income, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           }
           sample_str$sampMean <- sampMeanExp
           sample_str$gplot_sample <- samp_temp
           sample_str$counter <- sample_str$counter + 1
+          store1$h <- rbind(store1$h, data.frame(mean = sampMeanExp))
+          store1$h_unw <- rbind(store1$h_unw, data.frame(mean = sampMeanUnwExp))
+          store1$moe <- rbind(store1$moe, data.frame(moe = sampMoeExp))
         })
         sample_str$sampMeanFull <- sampMeanExp
+        sample_str$sampMeanUnwFull <- sampMeanUnwExp
         sample_str$sampMoeFull <- sampMoeExp
         if (isolate(sample_str$counter) < maxSim & input$stop1 == 0) {
           invalidateLater(0, session)
@@ -1147,6 +1146,7 @@ main_server <- function(input, output, session) {
             alloc <- strAlloc(Nh = pop_str$N, Sh = sd_vec, cost = budget, ch = var_cost, alloc = "totcost")
             n_str <- pmax(2, pmin(as.vector(round(alloc$nh)), hh_str$N))
             sampMeanExp <- vector(mode = "numeric", length = 100)
+            sampMeanUnwExp <- vector(mode = "numeric", length = 100)
             for (i in 1:100) {
               st <- sampling::strata(dataHH, stratanames = c("stratum"), size = n_str, method = "srswor")
               samp_temp <- dataHH[c(st$ID_unit)][, c("pik", "Stratum") := .(st$Prob, st$Stratum)]
@@ -1159,6 +1159,7 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$employment.status, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           } else {
@@ -1169,6 +1170,7 @@ main_server <- function(input, output, session) {
             alloc <- strAlloc(Nh = pop_str$N, Sh = sd_vec, cost = budget, ch = var_cost, alloc = "totcost")
             n_str <- pmax(2, pmin(as.vector(round(alloc$nh)), hh_str$N))
             sampMeanExp <- vector(mode = "numeric", length = 100)
+            sampMeanUnwExp <- vector(mode = "numeric", length = 100)
             for (i in 1:100) {
               st <- sampling::strata(dataHH, stratanames = c("stratum"), size = n_str, method = "srswor")
               samp_temp <- dataHH[c(st$ID_unit)][, c("pik", "Stratum") := .(st$Prob, st$Stratum)]
@@ -1181,14 +1183,19 @@ main_server <- function(input, output, session) {
               samp_mean <- sum(Wh * str_stat$y_h)
               se_st <- sqrt(sum((Wh^2) * str_stat$v_h, na.rm = TRUE))
               sampMeanExp[i] <- samp_mean
+              sampMeanUnwExp[i] <- mean(samp_tempPP$income, na.rm = TRUE)
               sampMoeExp[i] <- 1.96 * se_st / samp_mean
             }
           }
           sample_str$sampMean <- sampMeanExp
           sample_str$gplot_sample <- samp_temp
           sample_str$counter <- sample_str$counter + 1
+          store1$h <- rbind(store1$h, data.frame(mean = sampMeanExp))
+          store1$h_unw <- rbind(store1$h_unw, data.frame(mean = sampMeanUnwExp))
+          store1$moe <- rbind(store1$moe, data.frame(moe = sampMoeExp))
         })
         sample_str$sampMeanFull <- sampMeanExp
+        sample_str$sampMeanUnwFull <- sampMeanUnwExp
         sample_str$sampMoeFull <- sampMoeExp
         if (isolate(sample_str$counter) < maxSim & input$stop1 == 0) {
           invalidateLater(0, session)
@@ -1200,6 +1207,7 @@ main_server <- function(input, output, session) {
   ## Storage function for the reactiveValues of the vector of means
   store1 <- reactiveValues()
   store1$h <- data.frame(mean = as.numeric(character()))
+  store1$h_unw <- data.frame(mean = as.numeric(character()))
   store1$moe <- data.frame(moe = as.numeric(character()))
 
   ## Generate the message for interruption
@@ -1208,6 +1216,7 @@ main_server <- function(input, output, session) {
     session$sendCustomMessage(type = "testmessage", message = list("You have decided to interrupt the simulation, values are shown until simulation number:", c))
     buttonACT1$sim <- 0
     store1$h <- data.frame(mean = as.numeric(character()))
+    store1$h_unw <- data.frame(mean = as.numeric(character()))
     store1$moe <- data.frame(moe = as.numeric(character()))
     sample_str$counter <- 0
   })
@@ -1259,57 +1268,71 @@ main_server <- function(input, output, session) {
   })
 
   ##################################################################################
-  ##  HIST Stratified
+  ##  HIST Stratified (Single & Side-by-Side Weighted vs. Unweighted)
   output$hist_str <- renderPlotly({
     simu <- buttonACT1$sim
     shiny::validate(
       need(simu, message = F),
-      need(mapPopHH(), message = F)
+      need(mapPopHH(), message = F),
+      need(nrow(store1$h) > 0, message = F)
     )
-    maxSim <- simu / 100
-    isolate({
-      h <- as.data.frame(store1$h)
-      moe <- as.data.frame(store1$moe)
-      p <- mapPop()
-    })
-    ## Transform the data
+    p <- isolate(mapPop())
     m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
-    h_new <- as.data.frame(sample_str$sampMeanFull)
-    moe_new <- as.data.frame(sample_str$sampMoeFull)
-    names(moe_new) <- c("moe")
-    h <- rbind(h, as.data.frame(h_new))
-    moe <- rbind(moe, moe_new)
-    if (sample_str$counter <= maxSim) {
-      isolate({
-        store1$h <- h
-        store1$moe <- moe
-      })
-    }
-    names(h) <- "mean"
-    if (input$sampsiType == 1) {
-      hist <- ggplot(h, aes(x = mean, after_stat(count) / sum(after_stat(count)))) +
-        geom_histogram(na.rm = F, binwidth = 0.0001, color = "#009FDA") +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") + ylab("") + styleMain_noLeg
-      hist1 <- ggplotly(hist)
+    build_comp_hist(store1$h, m, is_prop = (input$sampsiType == 1), fill_col = "#009FDA", style_theme = styleMain_noLeg)
+  })
 
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    } else {
-      hist <- ggplot(h, aes(x = mean, y = after_stat(density))) +
-        geom_histogram(bins = 50, fill = "#009FDA", color = "black") +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") + ylab("") + styleMain_noLeg
-      hist1 <- ggplotly(hist)
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    }
+  output$hist_str_wt <- renderPlotly({
+    simu <- buttonACT1$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store1$h) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    x_lim <- range(c(store1$h$mean, store1$h_unw$mean, m), na.rm = TRUE)
+    build_comp_hist(store1$h, m, is_prop = (input$sampsiType == 1), fill_col = "#009FDA", x_lim = x_lim, style_theme = styleMain_noLeg)
+  })
+
+  output$hist_str_unw <- renderPlotly({
+    simu <- buttonACT1$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store1$h_unw) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    x_lim <- range(c(store1$h$mean, store1$h_unw$mean, m), na.rm = TRUE)
+    build_comp_hist(store1$h_unw, m, is_prop = (input$sampsiType == 1), fill_col = "#E76F51", x_lim = x_lim, style_theme = styleMain_noLeg)
+  })
+
+  output$weight_diag_str <- renderUI({
+    simu <- buttonACT1$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store1$h) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    s <- sample_str$gplot_sample
+    pik_vec <- if (!is.null(s) && "pik" %in% names(s)) s$pik else NULL
+    design_note <- switch(as.character(input$alloc),
+      "1" = "Under Equal Allocation, smaller strata (Tigray: 8.8% of population) are oversampled relative to larger strata (Oromia: 55.6%). Without inverse-probability weights (w_h = N_h / n_h), the unweighted sample mean over-represents Tigray and under-represents Oromia, causing systematic design bias.",
+      "2" = "Under Proportional Allocation (n_h / N_h = n / N), every household has an identical inclusion probability across all strata. The design is self-weighting (Kish DEFF_w = 1.00), so the unweighted and weighted means are identical.",
+      "3" = "Under Neyman Allocation, strata with higher standard deviations receive larger sample fractions. Sampling weights (w = 1/pik) are required to restore unbiased national estimates.",
+      "4" = "Under Optimal Allocation, strata with higher travel costs are sampled less intensively. Sampling weights (w = 1/pik) correct for unequal regional sampling rates.",
+      ""
+    )
+    render_weight_diag_ui(
+      wt_vals = store1$h$mean,
+      unw_vals = store1$h_unw$mean,
+      true_val = m,
+      pik_vec = pik_vec,
+      is_prop = (input$sampsiType == 1),
+      design_note = design_note
+    )
   })
   ##################################################################################
   ##  TABLE Stratified
@@ -1324,8 +1347,8 @@ main_server <- function(input, output, session) {
     maxSim <- simu / 100
     if ((sample_str$counter) == maxSim | input$stop1 == 1) {
       isolate({
-        tab <- data.frame(matrix(nrow = 3, ncol = 5))
-        names(tab) <- c("Stratum", "Number of EAs", "Number of Households", "Number of Persons", "Total Costs")
+        tab <- data.frame(matrix(nrow = 3, ncol = 6))
+        names(tab) <- c("Stratum", "Number of EAs", "Number of Households", "Number of Persons", "Base Weight (1/pik)", "Total Costs")
         p <- mapPop()
         p <- data.table(p, key = "hhidg")
         h <- mapPopHH()
@@ -1348,9 +1371,12 @@ main_server <- function(input, output, session) {
           tab[1, 4] <- round(sum(frame$count[frame$stratum == "1"]))
           tab[2, 4] <- round(sum(frame$count[frame$stratum == "3"]))
           tab[3, 4] <- round(sum(frame$count[frame$stratum == "4"]))
-          tab[1, 5] <- ceiling(sum(frame$dist[frame$stratum == "1"]))
-          tab[2, 5] <- ceiling(sum(frame$dist[frame$stratum == "3"]))
-          tab[3, 5] <- ceiling(sum(frame$dist[frame$stratum == "4"]))
+          tab[1, 5] <- round(mean(1 / frame$pik[frame$stratum == "1"], na.rm = TRUE), 1)
+          tab[2, 5] <- round(mean(1 / frame$pik[frame$stratum == "3"], na.rm = TRUE), 1)
+          tab[3, 5] <- round(mean(1 / frame$pik[frame$stratum == "4"], na.rm = TRUE), 1)
+          tab[1, 6] <- ceiling(sum(frame$dist[frame$stratum == "1"]))
+          tab[2, 6] <- ceiling(sum(frame$dist[frame$stratum == "3"]))
+          tab[3, 6] <- ceiling(sum(frame$dist[frame$stratum == "4"]))
           alloc_name <- switch(as.character(input$alloc),
             "1" = "Stratified SRS (Equal Allocation)",
             "2" = "Stratified SRS (Proportional Allocation)",
@@ -1541,6 +1567,7 @@ main_server <- function(input, output, session) {
     buttonACT2$sim<-input$sim2
     buttonACT2$size_hh<-input$n_clust
     store2$h<-data.frame(mean=as.numeric(character()))
+    store2$h_unw<-data.frame(mean=as.numeric(character()))
     store2$moe<-data.frame(moe=as.numeric(character()))
     sample_clu$counter<-0
     #print("reset")
@@ -1568,6 +1595,7 @@ main_server <- function(input, output, session) {
         dataPP <- mapPop()
         dataPP <- data.table(dataPP, key = "hhidg")
         sampMeanExp <- vector(mode = "numeric", length = 100)
+        sampMeanUnwExp <- vector(mode = "numeric", length = 100)
         sampMoeExp <- vector(mode = "numeric", length = 100)
         dataCLU <- data.table(dataHH %>% group_by(cluster) %>% summarise(HH_count = n_distinct(hhidg), countHH = mean(countHH)), key = "cluster")
         dataCLU <- dataCLU[dataCLU$HH_count >= size_hh, ]
@@ -1598,14 +1626,17 @@ main_server <- function(input, output, session) {
           if (input$sampsiType == 1) {
             samp_mean <- as.numeric(HTestimator(samp_tempPP$employment.status, samp_tempPP$pik)) /
               as.numeric(HTestimator(rep(1, nrow(samp_tempPP)), samp_tempPP$pik))
+            samp_mean_unw <- mean(samp_tempPP$employment.status, na.rm = TRUE)
             clu_means <- samp_tempPP[, .(ym = sum(employment.status / pik) / sum(1 / pik)), by = cluster]
           } else {
             samp_mean <- as.numeric(HTestimator(samp_tempPP$income, samp_tempPP$pik)) /
               as.numeric(HTestimator(rep(1, nrow(samp_tempPP)), samp_tempPP$pik))
+            samp_mean_unw <- mean(samp_tempPP$income, na.rm = TRUE)
             clu_means <- samp_tempPP[, .(ym = sum(income / pik) / sum(1 / pik)), by = cluster]
           }
           se_clu <- stats::sd(clu_means$ym, na.rm = TRUE) / sqrt(nrow(clu_means))
           sampMeanExp[i] <- samp_mean
+          sampMeanUnwExp[i] <- samp_mean_unw
           sampMoeExp[i] <- 1.96 * se_clu / samp_mean
         }
 
@@ -1613,9 +1644,13 @@ main_server <- function(input, output, session) {
         sample_clu$sampMean <- mean(sampMeanExp, na.rm = TRUE)
         sample_clu$sampMOE <- mean(sampMoeExp, na.rm = TRUE)
         sample_clu$counter <- sample_clu$counter + 1
+        store2$h <- rbind(store2$h, data.frame(mean = sampMeanExp))
+        store2$h_unw <- rbind(store2$h_unw, data.frame(mean = sampMeanUnwExp))
+        store2$moe <- rbind(store2$moe, data.frame(moe = sampMoeExp))
       })
       sample_clu$sampMeanFullProp <- sampMeanExp
       sample_clu$sampMeanFullCont <- sampMeanExp
+      sample_clu$sampMeanUnwFull <- sampMeanUnwExp
       sample_clu$sampMoeFullProp <- sampMoeExp
       if (isolate(sample_clu$counter) < maxSim & input$stop2 == 0) {
         invalidateLater(0, session)
@@ -1626,6 +1661,7 @@ main_server <- function(input, output, session) {
   ## Storage function for the reactiveValues of the vector of means
   store2 <- reactiveValues()
   store2$h <- data.frame(mean = as.numeric(character()))
+  store2$h_unw <- data.frame(mean = as.numeric(character()))
   store2$moe <- data.frame(moe = as.numeric(character()))
 
 
@@ -1635,6 +1671,7 @@ main_server <- function(input, output, session) {
     session$sendCustomMessage(type = "testmessage", message = list("You have decided to interrupt the simulation, values are shown until simulation number:", c))
     buttonACT2$sim <- 0
     store2$h <- data.frame(mean = as.numeric(character()))
+    store2$h_unw <- data.frame(mean = as.numeric(character()))
     store2$moe <- data.frame(moe = as.numeric(character()))
     sample_clu$counter <- 0
   })
@@ -1692,55 +1729,69 @@ main_server <- function(input, output, session) {
   })
 
   ##################################################################################
-  ##  HISTOGRAM SAMPLE
+  ##  HISTOGRAM SAMPLE (Single & Side-by-Side Weighted vs. Unweighted)
   output$hist_clu <- renderPlotly({
     simu <- buttonACT2$sim
     shiny::validate(
       need(simu, message = F),
-      need(mapPopHH(), message = F)
+      need(mapPopHH(), message = F),
+      need(nrow(store2$h) > 0, message = F)
     )
-    maxSim <- simu / 100
-    isolate({
-      h <- as.data.frame(store2$h)
-      moe <- as.data.frame(store2$moe)
-      p <- mapPop()
-    })
-    ## Transform the data
+    p <- isolate(mapPop())
     m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
-    h_new <- as.data.frame(sample_clu$sampMeanFullProp)
-    moe_new <- as.data.frame(sample_clu$sampMoeFullProp)
-    names(moe_new) <- c("moe")
-    moe <- rbind(moe, moe_new)
-    h <- rbind(h, h_new)
-    if (sample_clu$counter <= maxSim) {
-      isolate({ store2$h <- h })
-      isolate({ store2$moe <- moe })
-    }
-    names(h) <- "mean"
-    ##  Create the plot
-    if (input$sampsiType == 1) {
-      hist <- ggplot(h, aes(x = mean, after_stat(count) / sum(after_stat(count)))) +
-        geom_histogram(na.rm = F, binwidth = 0.0001, color = "#009FDA") +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") + ylab("") + styleMain_noLeg
-      hist1 <- ggplotly(hist)
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    } else {
-      hist <- ggplot(h, aes(x = mean, y = after_stat(density))) +
-        geom_histogram(bins = 50, fill = "#009FDA", color = "black") +
-        geom_vline(xintercept = m, color = "red", linewidth = 1) +
-        xlab("") + ylab("") + styleMain_noLeg
-      hist1 <- ggplotly(hist)
-      if (exists("hist1")) {
-        return(hist1)
-      } else {
-        return(NULL)
-      }
-    }
+    build_comp_hist(store2$h, m, is_prop = (input$sampsiType == 1), fill_col = "#009FDA", style_theme = styleMain_noLeg)
+  })
+
+  output$hist_clu_wt <- renderPlotly({
+    simu <- buttonACT2$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store2$h) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    x_lim <- range(c(store2$h$mean, store2$h_unw$mean, m), na.rm = TRUE)
+    build_comp_hist(store2$h, m, is_prop = (input$sampsiType == 1), fill_col = "#009FDA", x_lim = x_lim, style_theme = styleMain_noLeg)
+  })
+
+  output$hist_clu_unw <- renderPlotly({
+    simu <- buttonACT2$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store2$h_unw) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    x_lim <- range(c(store2$h$mean, store2$h_unw$mean, m), na.rm = TRUE)
+    build_comp_hist(store2$h_unw, m, is_prop = (input$sampsiType == 1), fill_col = "#E76F51", x_lim = x_lim, style_theme = styleMain_noLeg)
+  })
+
+  output$weight_diag_clu <- renderUI({
+    simu <- buttonACT2$sim
+    shiny::validate(
+      need(simu, message = F),
+      need(mapPopHH(), message = F),
+      need(nrow(store2$h) > 0, message = F)
+    )
+    p <- isolate(mapPop())
+    m <- ifelse(input$sampsiType == 1, mean(p$employment.status), mean(p$income))
+    s <- sample_clu$gplot_sample
+    pik_vec <- if (!is.null(s) && "pik" %in% names(s)) s$pik else NULL
+    design_note <- switch(as.character(input$cludesign),
+      "1" = "Under SRS at Stage 1 + fixed take (m) at Stage 2, households in small clusters have a much higher selection probability (pik = (k/K) * (m/M_i)) than households in large clusters. Base weights (w_i = 1/pik) vary across clusters and are required for design-unbiased estimation.",
+      "2" = "Under PPS at Stage 1 (p_1i = k * M_i / M) + fixed take (m) at Stage 2 (p_2i = m / M_i), the cluster size M_i cancels out: pik = p_1i * p_2i = (k * m) / M. Every household has an equal inclusion probability, making PPS-SRS self-weighting (Kish DEFF_w = 1.00)!",
+      ""
+    )
+    render_weight_diag_ui(
+      wt_vals = store2$h$mean,
+      unw_vals = store2$h_unw$mean,
+      true_val = m,
+      pik_vec = pik_vec,
+      is_prop = (input$sampsiType == 1),
+      design_note = design_note
+    )
   })
 
   output$tab_clu_sample <- renderDataTable({
@@ -1790,8 +1841,8 @@ main_server <- function(input, output, session) {
     maxSim <- simu / 100
     if ((sample_clu$counter) == maxSim | input$stop2 == 1) {
       isolate({
-        tab <- data.frame(matrix(nrow = 3, ncol = 5))
-        names(tab) <- c("Stratum", "Number of EAs", "Number of Households", "Number of Persons", "Total Costs")
+        tab <- data.frame(matrix(nrow = 3, ncol = 6))
+        names(tab) <- c("Stratum", "Number of EAs", "Number of Households", "Number of Persons", "Avg Weight (1/pik)", "Total Costs")
         p <- mapPop()
         p <- data.table(p, key = "hhidg")
         h <- mapPopHH()
@@ -1802,7 +1853,7 @@ main_server <- function(input, output, session) {
           n_hh <- isolate(input$n_clust)
           s <- sample_clu$gplot_sample
           s <- data.table(s, key = "hhidg")
-          frame <- h[s[, .(hhidg)], nomatch = 0]
+          frame <- h[s[, .(hhidg, pik)], nomatch = 0]
           frame[, distClu := dist / n_hh]
           sp <- p[s[, .(hhidg)], nomatch = 0]
           tab[1, 1] <- "Tigray"
@@ -1817,9 +1868,12 @@ main_server <- function(input, output, session) {
           tab[1, 4] <- round(sum(frame$count[frame$stratum == "1"]))
           tab[2, 4] <- round(sum(frame$count[frame$stratum == "3"]))
           tab[3, 4] <- round(sum(frame$count[frame$stratum == "4"]))
-          tab[1, 5] <- ceiling(sum(frame$distClu[frame$stratum == "1"]))
-          tab[2, 5] <- ceiling(sum(frame$distClu[frame$stratum == "3"]))
-          tab[3, 5] <- ceiling(sum(frame$distClu[frame$stratum == "4"]))
+          tab[1, 5] <- round(mean(1 / frame$pik[frame$stratum == "1"], na.rm = TRUE), 1)
+          tab[2, 5] <- round(mean(1 / frame$pik[frame$stratum == "3"], na.rm = TRUE), 1)
+          tab[3, 5] <- round(mean(1 / frame$pik[frame$stratum == "4"], na.rm = TRUE), 1)
+          tab[1, 6] <- ceiling(sum(frame$distClu[frame$stratum == "1"]))
+          tab[2, 6] <- ceiling(sum(frame$distClu[frame$stratum == "3"]))
+          tab[3, 6] <- ceiling(sum(frame$distClu[frame$stratum == "4"]))
         }
         clu_name <- switch(as.character(input$cludesign),
           "1" = "Two-Stage Cluster Sampling (SRS-SRS)",

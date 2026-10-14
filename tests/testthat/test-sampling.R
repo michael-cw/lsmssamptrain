@@ -120,3 +120,41 @@ test_that("Stratified and Cluster estimators are unbiased on package synthetic p
   expect_lt(abs(mean(est_clu_emp) - true_emp) / true_emp, 0.02)
   expect_lt(abs(mean(est_clu_inc) - true_inc) / true_inc, 0.05)
 })
+
+test_that("build_comp_hist and render_weight_diag_ui produce valid plotly and HTML UI objects", {
+  set.seed(101)
+  wt_df <- data.frame(mean = rnorm(100, mean = 2397, sd = 35))
+  unw_df <- data.frame(mean = rnorm(100, mean = 2430, sd = 35))
+  x_lim <- range(c(wt_df$mean, unw_df$mean, 2397))
+
+  p_wt <- lsmssamptrain:::build_comp_hist(wt_df, true_val = 2397, is_prop = FALSE, fill_col = "#009FDA", x_lim = x_lim)
+  p_unw <- lsmssamptrain:::build_comp_hist(unw_df, true_val = 2397, is_prop = FALSE, fill_col = "#E76F51", x_lim = x_lim)
+  expect_s3_class(p_wt, "plotly")
+  expect_s3_class(p_unw, "plotly")
+
+  # Unequal weights (e.g., Equal Allocation across unequal strata)
+  pik_unequal <- c(rep(150 / 2385, 150), rep(150 / 10286, 150), rep(150 / 14016, 150))
+  diag_ui <- lsmssamptrain:::render_weight_diag_ui(
+    wt_vals = wt_df$mean,
+    unw_vals = unw_df$mean,
+    true_val = 2397,
+    pik_vec = pik_unequal,
+    is_prop = FALSE,
+    design_note = "Test note"
+  )
+  expect_s3_class(diag_ui, "shiny.tag")
+  expect_match(as.character(diag_ui), "Unequal Selection Probabilities")
+
+  # Equal weights (self-weighting design)
+  pik_equal <- rep(450 / 26687, 450)
+  diag_ui_eq <- lsmssamptrain:::render_weight_diag_ui(
+    wt_vals = wt_df$mean,
+    unw_vals = wt_df$mean,
+    true_val = 2397,
+    pik_vec = pik_equal,
+    is_prop = FALSE
+  )
+  expect_s3_class(diag_ui_eq, "shiny.tag")
+  expect_match(as.character(diag_ui_eq), "Self-Weighting Design")
+})
+

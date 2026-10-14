@@ -2,6 +2,7 @@
 
 ## New Features
 
+* Added an interactive **Sampling Weights & Unweighted vs. Weighted Estimation Demo** on the Stratification and Clustering tabs, featuring synchronized side-by-side Horvitz-Thompson vs. unweighted sampling distribution histograms, a unified SRS distribution monitor, base weight ($1/\pi_k$) reporting in regional tables, and a **Weighting & Design Bias Diagnostics** panel reporting empirical bias, SE, RMSE, weight CV, and Kish's weight design effect ($\text{DEFF}_w = 1 + \text{CV}(w)^2$).
 * Completed interactive modules for **Stratified Random Sampling** (Equal, Proportional, Neyman, and Cost-Optimal allocations) and **Two-Stage Cluster Sampling** (SRS and PPS Stage-1 selection).
 * Added a **Summary & Diagnostics** tab comparing theoretical and simulated survey designs across sample sizes, achieved precision (95% Relative Margin of Error), regional stratum allocations, spatial household distributions, and travel costs.
 * Added automated **Word report export** (`.docx`) using `officer` and `flextable`, styled according to World Bank visual identity guidelines and including static spatial distribution maps.
