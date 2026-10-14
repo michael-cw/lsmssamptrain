@@ -32,7 +32,7 @@
 #' @importFrom plotly ggplotly plotlyOutput renderPlotly
 # #' @importFrom plyr . mutate summarise
 #' @importFrom sampling getdata HTestimator srswor strata
-#' @importFrom stats dnorm median qnorm sd runif
+#' @importFrom stats dnorm median qnorm sd runif var
 #' @importFrom utils head read.csv
 #' @importFrom sf st_read
 ## usethis namespace: end
@@ -51,6 +51,7 @@ NULL
 
 utils::globalVariables(c(".", "lon", "hhidg",
                          "lat", "stratum", "countHH", "count", "density", "value",
-                        "income", "hhsize", "cluster", "population", "population.hh",
-                        "eth.shp", "x", "samp", "pik", "employment.status")
+                         "income", "hhsize", "cluster", "population", "population.hh",
+                         "eth.shp", "x", "samp", "pik", "employment.status",
+                         "HH_count", "Stratum", "ym", "y_h", "v_h")
                        )

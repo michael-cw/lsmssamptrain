@@ -1,20 +1,19 @@
-#' Start the LSMS Sampling Trainer Application application
+#' Start the LSMS Sampling Trainer Application
 #'
+#' @description Launches the interactive 'Shiny' application for household
+#' survey sampling training based on the World Bank LSMS Sampling Manual.
 #'
-#' @description Shiny application to ...
+#' @details This function initializes and launches the LSMS Sampling Trainer
+#' application in the user's default web browser.
 #'
+#' @param launch.browser Logical; if `TRUE` (the default), the application opens
+#'   in the system's default web browser.
 #'
-#'
-#' @details This function is used to start the application.
-#'
-#' @inherit shiny::runApp
-#'
+#' @return Invisible `NULL`, called for its side effect of launching the 'Shiny'
+#'   application.
 #'
 #' @export
-#'
-
-
-runSampleTrainer <- function(launch.browser = T) {
+runSampleTrainer <- function(launch.browser = TRUE) {
     if (is.null(getOption("sp_startup_message"))) {
         options(sp_startup_message = "none")
     }
@@ -43,7 +42,7 @@ runSampleTrainer <- function(launch.browser = T) {
     }
     # create app & run
     appObj <- shiny::shinyApp(ui = main_ui, server = main_server, onStart = changeoptions)
-    shiny::runApp(appObj, launch.browser = launch.browser, quiet = T)
+    shiny::runApp(appObj, launch.browser = launch.browser, quiet = TRUE)
 }
 
 #' @rdname runSampleTrainer

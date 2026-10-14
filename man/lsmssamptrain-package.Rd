@@ -4,9 +4,9 @@
 \name{lsmssamptrain-package}
 \alias{lsmssamptrain}
 \alias{lsmssamptrain-package}
-\title{lsmssamptrain: What the Package Does (One Line, Title Case)}
+\title{lsmssamptrain: Interactive Household Survey Sampling Trainer Based on LSMS Guidelines}
 \description{
-What the package does (one paragraph).
+An interactive 'Shiny' application for hands-on training in household survey sampling design based on the World Bank Living Standards Measurement Study (LSMS) Sampling Manual. Users can explore sample size determination, simple random sampling (SRS), stratified random sampling (equal, proportional, Neyman, and cost-optimal allocation), and two-stage cluster sampling (equal probability and probability proportional to size) using a geo-referenced synthetic population of Ethiopia, complete with spatial visualization and automated Word report generation.
 }
 \author{
 \strong{Maintainer}: Michael Wild \email{Wild@worldbank.org}

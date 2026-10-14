@@ -103,7 +103,7 @@ frameTableSRV <- function(id, mapPopHH) {
       tab <- data.frame(matrix(nrow = 3, ncol = 8))
       names(tab) <- c(
         "Stratum", "Number of EAs", "Number of Households",
-        "Number of Persons", "Cluster size (Av/min", "Unit costs", "Unit standard deviation income", "ICC"
+        "Number of Persons", "Cluster size (Av/min)", "Unit costs", "Unit standard deviation income", "ICC"
       )
       tab[1, 1] <- "Tigray"
       tab[2, 1] <- "Amhara"
@@ -123,9 +123,9 @@ frameTableSRV <- function(id, mapPopHH) {
       tab[1, 6] <- round(sum(frame$dist[frame$stratum == "1"]) / length(unique(frame$hhidg[frame$stratum == "1"])), digits = 2)
       tab[2, 6] <- round(sum(frame$dist[frame$stratum == "3"]) / length(unique(frame$hhidg[frame$stratum == "3"])), digits = 2)
       tab[3, 6] <- round(sum(frame$dist[frame$stratum == "4"]) / length(unique(frame$hhidg[frame$stratum == "4"])), digits = 2)
-      tab[1, 7] <- round(sd(frame$income[frame$stratum == "1"]) / length(unique(frame$hhidg[frame$stratum == "1"])), digits = 2)
-      tab[2, 7] <- round(sd(frame$income[frame$stratum == "3"]) / length(unique(frame$hhidg[frame$stratum == "3"])), digits = 2)
-      tab[3, 7] <- round(sd(frame$income[frame$stratum == "4"]) / length(unique(frame$hhidg[frame$stratum == "4"])), digits = 2)
+      tab[1, 7] <- round(sd(frame$income[frame$stratum == "1"], na.rm = TRUE), digits = 2)
+      tab[2, 7] <- round(sd(frame$income[frame$stratum == "3"], na.rm = TRUE), digits = 2)
+      tab[3, 7] <- round(sd(frame$income[frame$stratum == "4"], na.rm = TRUE), digits = 2)
       str1 <- frame[frame$stratum == "1", ]
       str2 <- frame[frame$stratum == "3", ]
       str3 <- frame[frame$stratum == "4", ]

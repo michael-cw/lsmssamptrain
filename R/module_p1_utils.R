@@ -37,7 +37,7 @@ plot_normal_distribution_with_ci <- function(mu, sigma, confidence_interval = 0.
                 data = subset(data, value >= ci_lower & value <= ci_upper),
                 fill = "red", alpha = 0.4) +
     geom_segment(aes(x = mu, y = 0, xend = mu, yend = max_density),
-                 color = "blue", size = 1) +
+                 color = "blue", linewidth = 1) +
     annotate("text", x = mu, y = max(data$density), label = paste("Mean:", round(mu, 2)),
              vjust = -0.5, color = "blue") +
     annotate("text", x = ci_lower, y = 0, label = paste("CI Lower:", round(ci_lower, 2)),

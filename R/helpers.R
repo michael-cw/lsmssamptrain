@@ -2,29 +2,29 @@
 #'
 #' @keywords internal
 #' @noRd
-ppsDT<-function(data, clu="cluster", n, sizevar="HH_count"){
-  data_in<-data
-  if(!data.table::is.data.table(data)) 
-    data_in<-data.table::data.table(data)
-  
+ppsDT <- function(data, clu = "cluster", n, sizevar = "HH_count") {
+  data_in <- data.table::copy(data.table::as.data.table(data))
   data.table::setkeyv(data_in, clu)
-  #print(key(data_in))
-  ##  Preparing the data
-  int<-sum(data_in[[sizevar]])/n
-  data_in[,p1:=n*(data_in[[sizevar]]/sum(data_in[[sizevar]]))]
-  ##  Creating Random Order
-  data_in[sample(.N)]
-  ##  Cumulative sum
-  data_in[,cumul:=cumsum(data_in[[sizevar]])]
-  ##  Random start
-  rn<-runif(1, 0, int)
-  ##  Creat intervall groups and select firs per group
-  data_in[,int_group:=cut(cumul, seq(rn, (n+1)*int, by=int), labels=FALSE)]
-  data_out<-data_in[int_group>1]
-  data_out<-data_out[,.SD[1], by=int_group]
-  data_out<-data_out[,c("cumul", "int_group"):=NULL]
-  data_out<-data.table::setkeyv(data_out, clu)
-  return(data_out) 
+
+  ## Preparing the data
+  total_size <- sum(data_in[[sizevar]], na.rm = TRUE)
+  int <- total_size / n
+  data_in[, p1 := pmin(1, n * (data_in[[sizevar]] / total_size))]
+
+  ## Creating Random Order
+  data_in <- data_in[sample(.N)]
+
+  ## Cumulative sum & systematic PPS selection
+  data_in[, cumul := cumsum(data_in[[sizevar]])]
+  rn <- stats::runif(1, 0, int)
+  pts <- rn + (0:(n - 1)) * int
+  idx <- findInterval(pts, data_in$cumul, left.open = TRUE) + 1L
+  idx <- pmin(idx, nrow(data_in))
+
+  data_out <- data_in[unique(idx)]
+  data_out[, cumul := NULL]
+  data.table::setkeyv(data_out, clu)
+  return(data_out)
 }
 
 #' Allocation for Stratified Sampling

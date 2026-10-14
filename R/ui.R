@@ -146,14 +146,14 @@ main_ui<-function(request){
                        ),
                        column(
                          4,
-                         radioButtons("cludesign", "Type of PSU sampling", c("SRS" = 1, "PPS" = 2), selected = 1, inline = T)
+                         radioButtons("cludesign_init", "Type of PSU sampling", c("SRS" = 1, "PPS" = 2), selected = 1, inline = T)
                        )
                      ),
                      fluidRow(
                        column(4),
                        column(
                          4,
-                         numericInput("n_clust", "Households per cluster?", 10, min = 8, max = 40)
+                         numericInput("n_clust_init", "Households per cluster?", 10, min = 8, max = 40)
                        ),
                        column(
                          4,
@@ -334,13 +334,13 @@ main_ui<-function(request){
                  "Stratification",
                  sidebarPanel(
                    h3("Simulation Controls"),
-                   numericInput("sim1", "Select the number of times you want to repeat the simulation", 1,
-                                min = 1, max = 1000
+                   numericInput("sim1", "Select the number of times you want to repeat the simulation", 100,
+                                step = 100, min = 100, max = 1000
                    ),
                    helpText("The maximum number of draws is 1000. This means 1000 samples are drawn from the underlying population, and their means are plotted in the
                                        bar chart to the right. What you see there is called the sampling distribution"),
                    numericInput("budget", "Please specify the maximum available survey budget", 150000,
-                                min = 1, max = 100000
+                                min = 1000, max = 500000, step = 5000
                    ),
                    helpText("The maximum budget is needed for the optimal allocation mode. Currently 1 km refers to 1 USD"),
                    radioButtons("alloc", "Select the type of stratum allocation",
@@ -348,7 +348,7 @@ main_ui<-function(request){
                                 selected = 1, inline = T
                    ),
                    actionButton("generate1", "Start the simulation",
-                                icon("stop"),
+                                icon("play"),
                                 style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
                    ),
                    br(),
@@ -423,15 +423,14 @@ main_ui<-function(request){
                  "Clustering",
                  sidebarPanel(
                    h3("Simulation Controls"),
-                   numericInput("sim2", "Select the number of times you want to repeat the simulation", 1,
-                                min = 1, max = 1000
+                   numericInput("sim2", "Select the number of times you want to repeat the simulation", 100,
+                                step = 100, min = 100, max = 1000
                    ),
-                   helpText("The maximum number of draws is 1000 You have seen the sampling distribution already, in this part of the simulator we will
-                              only present you the result tables"),
+                   helpText("The maximum number of draws is 1000. Samples are drawn using a two-stage cluster design and their sampling distribution and summary tables are shown to the right."),
                    numericInput("n_clust", "How many units are you planning to sample per cluster?", 10, min = 8, max = 40),
                    radioButtons("cludesign", "Please select the type of cluster sampling", c("SRS" = 1, "PPS" = 2), selected = 1, inline = T),
                    actionButton("generate2", "Start the simulation",
-                                icon("stop"),
+                                icon("play"),
                                 style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
                    ),
                    br(), br(),

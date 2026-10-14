@@ -1,9 +1,9 @@
 Package: lsmssamptrain
-Title: What the Package Does (One Line, Title Case)
+Title: Interactive Household Survey Sampling Trainer Based on LSMS Guidelines
 Version: 0.0.0.9000
 Authors@R: 
     person("Michael", "Wild", , "Wild@worldbank.org", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: An interactive 'Shiny' application for hands-on training in household survey sampling design based on the World Bank Living Standards Measurement Study (LSMS) Sampling Manual. Users can explore sample size determination, simple random sampling (SRS), stratified random sampling (equal, proportional, Neyman, and cost-optimal allocation), and two-stage cluster sampling (equal probability and probability proportional to size) using a geo-referenced synthetic population of Ethiopia, complete with spatial visualization and automated Word report generation.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Language: en
@@ -26,8 +26,11 @@ Imports:
     shiny,
     shinydashboard,
     waiter
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5.0)
 LazyData: true
 Remotes: 
     DiegoZardetto/ReGenesees

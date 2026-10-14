@@ -3,59 +3,25 @@
 \name{runSampleTrainer}
 \alias{runSampleTrainer}
 \alias{run_app}
-\title{Start the LSMS Sampling Trainer Application application}
+\title{Start the LSMS Sampling Trainer Application}
 \usage{
-runSampleTrainer(launch.browser = T)
+runSampleTrainer(launch.browser = TRUE)
 
-run_app(launch.browser = T)
+run_app(launch.browser = TRUE)
 }
 \arguments{
-\item{launch.browser}{If true, the system's default web browser will be
-launched automatically after the app is started. Defaults to true in
-interactive sessions only. The value of this parameter can also be a
-function to call with the application's URL.}
+\item{launch.browser}{Logical; if \code{TRUE} (the default), the application opens
+in the system's default web browser.}
+}
+\value{
+Invisible \code{NULL}, called for its side effect of launching the 'Shiny'
+application.
 }
 \description{
-Shiny application to ...
+Launches the interactive 'Shiny' application for household
+survey sampling training based on the World Bank LSMS Sampling Manual.
 }
 \details{
-This function is used to start the application.
-}
-\examples{
-\dontrun{
-# Start app in the current working directory
-runApp()
-
-# Start app in a subdirectory called myapp
-runApp("myapp")
-}
-
-## Only run this example in interactive R sessions
-if (interactive()) {
-  options(device.ask.default = FALSE)
-
-  # Apps can be run without a server.r and ui.r file
-  runApp(list(
-    ui = bootstrapPage(
-      numericInput('n', 'Number of obs', 100),
-      plotOutput('plot')
-    ),
-    server = function(input, output) {
-      output$plot <- renderPlot({ hist(runif(input$n)) })
-    }
-  ))
-
-
-  # Running a Shiny app object
-  app <- shinyApp(
-    ui = bootstrapPage(
-      numericInput('n', 'Number of obs', 100),
-      plotOutput('plot')
-    ),
-    server = function(input, output) {
-      output$plot <- renderPlot({ hist(runif(input$n)) })
-    }
-  )
-  runApp(app)
-}
+This function initializes and launches the LSMS Sampling Trainer
+application in the user's default web browser.
 }
